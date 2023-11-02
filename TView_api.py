@@ -133,6 +133,7 @@ class TViewAPI():
                     # Break the loop if qsd starts to repeat
                     if message == "qsd":
                         if r in qsd_dicts:
+                            seassion_info, series_description, data = None, None, None
                             loading = False
                             break
                         else:
