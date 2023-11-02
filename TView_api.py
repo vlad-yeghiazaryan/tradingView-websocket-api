@@ -114,6 +114,7 @@ class TViewAPI():
         return res
     
     def receive_response(self):
+        qsd_dicts = []
         loading = True
         while loading:
             res = self.ws.recv()
@@ -129,15 +130,25 @@ class TViewAPI():
                     continue
                 elif "m" in r:
                     message = r.get("m")
-                    if message == "symbol_resolved":
+                    # Break the loop if qsd starts to repeat
+                    if message == "qsd":
+                        if r in qsd_dicts:
+                            loading = False
+                            break
+                        else:
+                            qsd_dicts.append(r) 
+                    elif message == "series_loading":
+                        continue
+                    elif message == "symbol_resolved":
                         series_description = r['p'][2]
                     elif message == "timescale_update":
                         data = pd.DataFrame(r['p'][1]['sds_1']['s'])['v'].apply(pd.Series)
                         data.columns = ['date', 'open', 'high', 'low', 'close']
                         loading = False
-                    elif message == "symbol_error":
+                    elif (message == "symbol_error") or (message == "series_error"):
                         seassion_info, series_description, data = None, None, None
                         loading = False
+                        break
                     else:
                         # Todo
                         print(message)
