@@ -26,7 +26,7 @@ class TViewAPI():
         "Origin": "https://data.tradingview.com",
         "user-agent": "<v.y2000@gmail.com> scraping for educational use"
         })
-
+    skip_messages = ["series_loading", "series_completed", "quote_completed"]
     def __init__(self):
         self.request_version = 1
         self.websocket_session = self.generate_sesssion(self.WEBSOCKET)
@@ -137,7 +137,7 @@ class TViewAPI():
                             break
                         else:
                             qsd_dicts.append(r) 
-                    elif message == "series_loading":
+                    elif message in self.skip_messages:
                         continue
                     elif message == "symbol_resolved":
                         series_description = r['p'][2]
