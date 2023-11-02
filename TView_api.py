@@ -114,14 +114,9 @@ class TViewAPI():
         return res
     
     def receive_response(self):
-        pattern = re.compile("~m~\d+~m~~h~\d+$")
         loading = True
         while loading:
             res = self.ws.recv()
-            if pattern.match(res):
-                # Send heart beat to keep connection alive
-                self.ws.recv()
-                self.ws.send(res)
             for r in res.split("~m~"):
                 try:
                     r = json.loads(r)
@@ -132,16 +127,25 @@ class TViewAPI():
                 if "session_id" in r:
                     seassion_info = r
                     continue
-                if "m" in r:
+                elif "m" in r:
                     message = r.get("m")
                     if message == "symbol_resolved":
                         series_description = r['p'][2]
-                    if message == "timescale_update":
+                    elif message == "timescale_update":
                         data = pd.DataFrame(r['p'][1]['sds_1']['s'])['v'].apply(pd.Series)
                         data.columns = ['date', 'open', 'high', 'low', 'close']
                         loading = False
+                    elif message == "symbol_error":
+                        seassion_info, series_description, data = None, None, None
+                        loading = False
+                    else:
+                        # Todo
+                        print(message)
+                else:
+                    # Todo
+                    print(r.keys())
         return seassion_info, series_description, data
-    
+
     def get_data(self, symbol: str, freq :str = "1M", nubmer_of_values: int = 1000):
         # Creating a websocket connection
         self.ws = create_connection("wss://data.tradingview.com/socket.io/websocket", headers=self.headers)
@@ -164,13 +168,15 @@ class TViewAPI():
         dataset = []
         for symbol in tqdm(symbols, leave=True, desc = f'Retrieving data'):
             seassion_info, series_description, data = self.get_data(symbol, freq, nubmer_of_values)
-            data['symbol'] = symbol
-            if 'country' in series_description:
-                data['country'] = series_description['country']
-            if 'type' in series_description:
-                data['type'] = series_description['type']
+            if type(data)!=type(None):
+                data['symbol'] = symbol
+                if 'country' in series_description:
+                    data['country'] = series_description['country']
+                if 'type' in series_description:
+                    data['type'] = series_description['type']
+                dataset.append(data)
             time.sleep(sleep_time)
-            dataset.append(data)
-        dataset = pd.concat(dataset).reset_index(drop=True)
-        dataset['date'] = dataset['date'].apply(datetime.utcfromtimestamp)
+        if len(dataset)!= 0:
+            dataset = pd.concat(dataset).reset_index(drop=True)
+            dataset['date'] = dataset['date'].apply(datetime.utcfromtimestamp)
         return dataset
