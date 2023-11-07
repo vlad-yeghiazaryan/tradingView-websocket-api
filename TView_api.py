@@ -26,7 +26,8 @@ class TViewAPI():
         "Origin": "https://data.tradingview.com",
         "user-agent": "<v.y2000@gmail.com> scraping for educational use"
         })
-    skip_messages = ["series_loading", "series_completed", "quote_completed"]
+    skip_messages = ["series_loading", "series_completed", 
+                     "quote_completed", "du"]
     def __init__(self):
         self.request_version = 1
         self.websocket_session = self.generate_sesssion(self.WEBSOCKET)
