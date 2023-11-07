@@ -153,9 +153,11 @@ class TViewAPI():
                     else:
                         # Todo
                         print(message)
+                        print(r)
                 else:
                     # Todo
                     print(r.keys())
+                    print(r)
         return seassion_info, series_description, data
 
     def get_data(self, symbol: str, freq :str = "1M", nubmer_of_values: int = 1000):
